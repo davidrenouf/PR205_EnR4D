@@ -10,8 +10,14 @@ Start by flashing you SD-card by using etcher that you can get from the followin
 
 ### *Flash the SD-card*
 Now, insert the SD-card, use the image you just downloaded and then press: `flash`.
-When the SD-card is flashed, take it out then put it again on the Raspberry Pi 4.
+When the SD-card is flashed, take it out then put it again on the machine.
 
 ### *Enable SSH*
-In order to make SSH available on the new Raspberry Pi 4, you need to create a file in the boot directory by using the following comand:
-<code> $ touch /Volumes/boot/ssh </code>
+In order to make SSH available on the machine, you need to create a file in the boot directory by using the following comand:
+`$ touch /Volumes/boot/ssh`
+
+Unmount the SD-card and put it in the Raspberry Pi. Now you are ready to fire up this little tool!
+
+After that, you should be able to SSH into the Raspberry Pi as follows:
+`ssh pi@raspberrypi.local`
+
