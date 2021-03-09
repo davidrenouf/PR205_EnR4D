@@ -20,4 +20,8 @@ Unmount the SD-card and put it in the Raspberry Pi. Now you are ready to fire up
 
 After that, you should be able to SSH into the Raspberry Pi as follows:
 `ssh pi@raspberrypi.local`
+`password : raspberry`
+
+
+
 
