@@ -61,4 +61,9 @@ You can do this on your personal machine then copy it in your Raspberry Pi 4 via
 
 `$ scp your_machine_name:/path_of_the_file/hostname_and_ip.sh /home/pi/Desktop`
 
+Now you can run the script using 3 arguments:
+- First argument: the new hostname
+- Second argument: the new static IP
+- Third argument: the IP of your Router
+
 
