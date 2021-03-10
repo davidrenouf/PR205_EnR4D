@@ -66,4 +66,8 @@ Now you can run the script using 3 arguments:
 - Second argument: the new static IP
 - Third argument: the IP of your Router
 
+To do so you should use the following command:
+
+`$ sh hostname_and_ip.sh k8s-master 192.168.1.100 192.168.1.1`
+
 
