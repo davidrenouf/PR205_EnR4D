@@ -57,4 +57,8 @@ static domain_name_servers=$dns
 EOT
 ```
 
+You can do this on your personal machine then copy it in your Raspberry Pi 4 via ssh using the following command:
+
+`$ scp your_machine_name:/path_of_the_file/hostname_and_ip.sh /home/pi/Desktop`
+
 
