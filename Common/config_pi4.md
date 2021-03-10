@@ -14,14 +14,47 @@ When the SD-card is flashed, take it out then put it again on the machine.
 
 ### *Enable SSH*
 In order to make SSH available on the machine, you need to create a file in the boot directory by using the following comand:
+
 `$ touch /Volumes/boot/ssh`
 
 Unmount the SD-card and put it in the Raspberry Pi. Now you are ready to fire up this little tool!
 
 After that, you should be able to SSH into the Raspberry Pi as follows:
-`ssh pi@raspberrypi.local`
+
+`ssh pi@raspberrypi.local`  
+
 `password : raspberry`
 
+### *Setup hostname and attach static ip*
+In order to make the Raspberry Pi 4 easy to identify, you need to privide a new hostname and a static IP adress for it.
 
+You can do this by creating a script for it, you can use the following command to open an empty file:
+
+`$ nano hostname_and_ip.sh`
+
+Then copy the following script:
+
+```
+#!/bin/sh
+
+hostname=$1
+ip=$2 # should be of format: 192.168.1.100
+dns=$3 # should be of format: 192.168.1.1
+
+# Change the hostname
+sudo hostnamectl --transient set-hostname $hostname
+sudo hostnamectl --static set-hostname $hostname
+sudo hostnamectl --pretty set-hostname $hostname
+sudo sed -i s/raspberrypi/$hostname/g /etc/hosts
+
+# Set the static ip
+
+sudo cat <<EOT >> /etc/dhcpcd.conf
+interface eth0
+static ip_address=$ip/24
+static routers=$dns
+static domain_name_servers=$dns
+EOT
+```
 
 
