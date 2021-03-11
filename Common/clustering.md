@@ -59,3 +59,7 @@ First, we have to install `kubeadm` on the master node. To do so, you have to ru
   sudo apt-get update -q && \
   sudo apt-get install -qy kubeadm
 ```
+This program downloads Docker on your device, disables swap and installs `kubeadm`.
+Then, you have to initialize kubeadm by running this command :
+
+  $ kubeadm init
