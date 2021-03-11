@@ -62,4 +62,47 @@ First, we have to install `kubeadm` on the master node. To do so, you have to ru
 This program downloads Docker on your device, disables swap and installs `kubeadm`.
 Then, you have to initialize kubeadm by running this command :
 
-  $ kubeadm init
+    $ kubeadm init
+Once the process is finish, you shoud have this output :
+-insert img
+
+The last 2 lines give you the command to join the cluster. We will use it later.
+Then, you have to follow the instructions given in the output :
+
+    $ mkdir -p $HOME/.kube
+    $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Finally, your node master is set up. You can verify its status with the next command line :
+    
+    $ kubectl get nodes
+    
+You must see this output :
+-insert img
+
+### Worker node configuration
+As the master node configuration, you have to install `kubeadm`. You can refer to the previous part. Once `kubeadm` is installed, you have to join the cluster created before. You have to run the next command line given in the last part :
+
+    $ sudo kubeadm join --token TOKEN 192.168.1.100:6443 --discovery-token-ca-cert-hash HASH
+
+You have to repeat this process for every Raspberry.
+Here an example of what you should see after joining the cluster :
+-insert img
+
+### Add a container network
+
+As you can see in this picture, the core-dns pods aren't running. They are in a pending state.
+-insert img
+
+Nodes are not able to communicate without a container network, which is something you have to provide. Therefore, the final piece of the puzzle is to add one. We will be using weave-net for this. On the master node, run the following command:
+
+    $ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d ‘\n’)"
+
+With the container network added, you can verify the good health of the cluster :
+-insert img
+
+
+
+## Test your cluster
+
+In order to test the cluster, you can deploy a pod :
