@@ -64,7 +64,7 @@ Then, you have to initialize kubeadm by running this command :
 
     $ kubeadm init
 Once the process is finish, you shoud have this output :
-![PR205_EnR4D](Common/img/clusterinit.png)
+![PR205_EnR4D](img/clusterinit.png)
 
 The last 2 lines give you the command to join the cluster. We will use it later.
 Then, you have to follow the instructions given in the output :
@@ -78,7 +78,8 @@ Finally, your node master is set up. You can verify its status with the next com
     $ kubectl get nodes
     
 You must see this output :
--insert img
+![PR205_EnR4D](img/clusterinit.png)
+
 
 ### Worker node configuration
 As the master node configuration, you have to install `kubeadm`. You can refer to the previous part. Once `kubeadm` is installed, you have to join the cluster created before. You have to run the next command line given in the last part :
@@ -92,17 +93,21 @@ Here an example of what you should see after joining the cluster :
 ### Add a container network
 
 As you can see in this picture, the core-dns pods aren't running. They are in a pending state.
--insert img
+![PR205_EnR4D](img/issue.png)
 
 Nodes are not able to communicate without a container network, which is something you have to provide. Therefore, the final piece of the puzzle is to add one. We will be using weave-net for this. On the master node, run the following command:
 
     $ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d ‘\n’)"
 
 With the container network added, you can verify the good health of the cluster :
--insert img
+![PR205_EnR4D](img/fixproblem.png)
 
 
 
 ## Test your cluster
 
 In order to test the cluster, you can deploy a pod :
+![PR205_EnR4D](img/exemple.png)
+![PR205_EnR4D](img/ex2.png)
+
+
