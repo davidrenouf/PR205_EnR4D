@@ -64,7 +64,7 @@ Then, you have to initialize kubeadm by running this command :
 
     $ kubeadm init
 Once the process is finish, you shoud have this output :
--insert img
+![PR205_EnR4D](Common/img/clusterinit.png)
 
 The last 2 lines give you the command to join the cluster. We will use it later.
 Then, you have to follow the instructions given in the output :
