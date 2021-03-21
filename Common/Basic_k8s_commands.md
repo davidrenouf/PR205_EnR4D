@@ -95,18 +95,18 @@ Now, let's add a toleration to a pod - create a pod config file (named node_tain
 apiVersion: v1  
 kind: Pod  
 metadata:  
-	name: with-taints-tolerations  
-	labels:  
-		env: test  
+  name: with-taints-tolerations  
+  labels:  
+    env: test  
 spec:  
-	containers:  
-	- name: with-taints-tolerations  
-		image: nginx  
-		imagePullPolicy: IfNotPresent  
-	tolerations:  
-	- key: "key1"  
-		operator: "Exists"  
-		effect: "NoSchedule"
+  containers:  
+  - name: with-taints-tolerations  
+    image: nginx  
+    imagePullPolicy: IfNotPresent  
+  tolerations:  
+  - key: "key1"  
+    operator: "Exists"  
+    effect: "NoSchedule"
 ```
 A toleration "matches" a taint if the keys are the same and the effects are the same, and:
 
