@@ -97,7 +97,7 @@ As you can see in this picture, the core-dns pods aren't running. They are in a 
 
 Nodes are not able to communicate without a container network, which is something you have to provide. Therefore, the final piece of the puzzle is to add one. We will be using weave-net for this. On the master node, run the following command:
 
-    $ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d ‘\n’)"
+    $ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
 With the container network added, you can verify the good health of the cluster :
 ![PR205_EnR4D](img/fixproblem.png)
