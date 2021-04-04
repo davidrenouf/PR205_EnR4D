@@ -10,21 +10,21 @@ Link to the weekly tracking table : https://docs.google.com/presentation/d/1LTmy
 
 ## Add an User Story (issue) on Github Project
 
-**  "Issues" tab
- On the main part:
+"Issues" tab
+On the main part:
 
- --> "New issue"
+   --> "New issue"
  
- --> Add a explicit/detailed title
+   --> Add a explicit/detailed title
  
- On the right (parameters) :
+On the right (parameters) :
  
- --> Assignees : No one
+   --> Assignees : No one
  
- --> Labels : enhancement
+   --> Labels : enhancement
  
- --> Projects : Projet EnR4D
+   --> Projects : Projet EnR4D
  
- Finally, "Submit new issue"
+Finally, "Submit new issue"
  
- The User Story will be added automatically on the rubrik "To Do" of the Github Project.
+The User Story will be automatically added on the rubrik "To Do" of the Github Project.
