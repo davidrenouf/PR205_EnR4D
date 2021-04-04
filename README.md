@@ -8,18 +8,16 @@ The Github Project is accessible via the Project tab on this page. It gathers al
 
 Link to the weekly tracking table : https://docs.google.com/presentation/d/1LTmyKdJtUMtE4mM98s6AkLWbQGiaFR6oFwXyF4fA1xQ/edit?usp=sharing
 
-## Add an issue on Github Project
+## Add an User Story (issue) on Github Project
 
-Tuto créer une "issue" :
-
-** Onglet "Issues"
- Sur la partie centrale :
+**  "Issues" tab
+ On the main part:
 
  --> "New issue"
  
- --> Mettre un titre et un descriptif EXPLICITE
+ --> Add a explicit/detailed title
  
- Sur la droite :
+ On the right (parameters) :
  
  --> Assignees : No one
  
@@ -27,6 +25,6 @@ Tuto créer une "issue" :
  
  --> Projects : Projet EnR4D
  
- Puis "Submit new issue"
+ Finally, "Submit new issue"
  
- Elle s'ajoute automatiquement dans le projet dans la colonne "To Do"
+ The User Story will be added automatically on the rubrik "To Do" of the Github Project.
