@@ -1,23 +1,30 @@
 # EnR4D
-Project Repository
+Project realized at ENSEIRB-MATMECA in collaboration with Orange. This repository gathers the documentation realized throughout the project, a bibliography gathering important sources and the Github Project facilitating the distribution of the tasks.
 
-Tuto créer une "issue" :
 
-** Onglet "Issues"
- Sur la partie centrale :
+## Project management tool
 
- --> "New issue"
+The Github Project is accessible via the Project tab on this page. It gathers all the User Stories : to do, in progress and done.
+
+Link to the weekly tracking table : https://docs.google.com/presentation/d/1LTmyKdJtUMtE4mM98s6AkLWbQGiaFR6oFwXyF4fA1xQ/edit?usp=sharing
+
+## Add an User Story (issue) on Github Project
+
+"Issues" tab
+On the main part:
+
+   --> "New issue"
  
- --> Mettre un titre et un descriptif EXPLICITE
+   --> Add a explicit/detailed title
  
- Sur la droite :
+On the right (parameters) :
  
- --> Assignees : No one
+   --> Assignees : No one
  
- --> Labels : enhancement
+   --> Labels : enhancement
  
- --> Projects : Projet EnR4D
+   --> Projects : Projet EnR4D
  
- Puis "Submit new issue"
+Finally, "Submit new issue"
  
- Elle s'ajoute automatiquement dans le projet dans la colonne "To Do"
+The User Story will be automatically added on the rubrik "To Do" of the Github Project.
