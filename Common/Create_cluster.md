@@ -4,7 +4,7 @@ Once kubeadm is installed and weel configure, you will have to re create the k8s
 
 ## Bash script on the master
 
-When you connect to the master with ssh, the script start. You only have to answer "y" when the system asked your permission to continue the process.
+When you connect to the master with ssh, the script starts. You only have to answer "y" when the system ask your permission to continue the process.
 Once the process is done, kubeadm is initialized on the master and ready to accept worker nodes.
 
 ## On the worker
@@ -29,3 +29,12 @@ This command will print you the content of the file token. Then copy the two las
 
 ## Use the copied line on the worker node
 Go to the worker node and use the command line you had copied. This command must connect you to the k8s cluster!
+
+## Add a container network
+Don't forget to add the container network with the next command line on the master node :
+``
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+``
+
+
+
