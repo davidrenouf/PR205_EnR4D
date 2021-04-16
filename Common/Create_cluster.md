@@ -1,6 +1,15 @@
 # How to re create a k8s cluster with kubeadm on Raspebrry pi
 
 Once kubeadm is installed and weel configure, you will have to re create the k8s cluster each time you re start the Raspberry pi. In order to automate this part, bash scripts were created.
+Commands to connect to Raspberry :
+- Master
+``
+ssh pi@k8s-master.local
+``
+- Worker
+``
+ssh pi@k8s-worker-02.local
+``
 
 ## Bash script on the master
 
@@ -15,7 +24,7 @@ sh disable_swap.sh
 ``
 Once the swap is disabled, use the commad line:
 ``
-kubeadm reset
+sudo kubeadm reset
 ``
 Then, your Raspberry pi is ready to join the k8s cluster.
 
@@ -33,7 +42,7 @@ Go to the worker node and use the command line you had copied. This command must
 ## Add a container network
 Don't forget to add the container network with the next command line on the master node :
 ``
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+sudo kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 ``
 
 
