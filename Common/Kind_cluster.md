@@ -81,4 +81,7 @@ Once you're in Grafana, you can inspect many things. A good start is to import a
 
 To access the freshly imported dashboard, go on the loupe icon and there you should see ```k8s Cluster Metrics``` which is the dashboard.
 
+![PR205_EnR4D](img/graf_k8s.JPG)
+
+
 
