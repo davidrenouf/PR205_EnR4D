@@ -84,4 +84,11 @@ To access the freshly imported dashboard, go on the loupe icon and there you sho
 ![PR205_EnR4D](img/graf_k8s.JPG)
 
 
-
+## Use Prometheus 
+A Prometheus component was installed with the Prometheus operator. To use it, you have to make the service available on one of your machine port (9090 in this case) : 
+```shell
+kubectl port-forward prometheus-prometheus-kube-prometheus-prometheus-0 9090
+```
+let your terminal run this command.
+To access Prometheus UI, go on a web browser with URL ```localhost:9090```.
+In the same time, you can use the Prometheus API with the following endpoint : ```http://localhost:9090/api/v1/query```
