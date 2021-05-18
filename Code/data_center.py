@@ -5,16 +5,51 @@ import os
 
 starttime = time.time()
 
+def appel_api(dc_city,nb):
+    #API call
+    
+    api_result = requests.get('http://localhost:8080/scenario1/' + str(nb))
+
+    api_response = api_result.json()
+    
+    return api_response[dc_city][0]
+
 class DataCenter :
     "Definition d'un data center"
 
-    def __init__(self,ensoleillement,rendement,temperature,kWc):
+    def __init__(self,ensoleillement,rendement,temperature,kWc,humidity,uv,weather_code,cloud_cover):
         "Initialisation"
         self.ensoleillement = ensoleillement
         self.rendement = rendement
         self.temperature = temperature
         self.kWc = kWc
-    
+        self.humidity = humidity
+        self.uv = uv
+        self.weather_code = weather_code
+        self.cloud_cover = cloud_cover
+
+    def calcul_redement(self):
+        rendement = 1
+
+        #Weather code 113 = sunny 
+
+        if (self.weather_code != 113):
+            rendement *= 0.7
+
+        if (self.uv >= 3):
+            rendement *= 1.2
+
+        if (self.humidity >= 50):
+            rendement *= 0.9
+
+        if (self.cloud_cover >= 50):
+            rendement *= 0.5
+        
+        if (rendement > 1 ):
+            rendement = 1
+
+        self.rendement = rendement
+
     def calcul_production(self,t):
         "Production sur t secondes"
         production = self.ensoleillement * self.kWc * self.rendement
@@ -23,11 +58,13 @@ class DataCenter :
         
         return round(productiont * 1000)  #1000 nb de panneau
 
-    def calcul_consommation(sel,t,coeff):
+    def calcul_consommation(sel,t,nb_pod):
         "Consommation sur t secondes"
-        consommation = (5.15*10**6*1 * t) / 31536000 * coeff #MkWh/m²/an*t * m² / t_total
+        consommation = (5.15*10**6*1 * t) / 31536000 * nb_pod #MkWh/m²/an*t * m² / t_total
 
-        return round(consommation)
+        return round(consommation/4)
+
+
 
     def maj_ensoleillement(self,ensoleillement):
         self.ensoleillement = ensoleillement
@@ -36,96 +73,102 @@ class DataCenter :
         self.rendement = rendement
 
     def maj_temperature(self,temperature):
-        self.tempretaure = temperature
+        self.temperature = temperature
     
     def maj_kWc(self,kWc):
         self.kWc = kWc
+
+    def maj_humidity(self,humidity):
+        self.humidity = humidity
+
+    def maj_uv(self,uv):
+        self.uv = uv
+
+    def maj_weather_code(self,weather_code):
+        self.weather_code = weather_code
+
+    def maj_cloud_cover(self,cloud_cover):
+        self.cloud_cover = cloud_cover
      
 
-def appel_api(dc_city):
-    #API call
-
-    """ params = {
-    'access_key': '5e3640eadf328a6a816431fe5502cb3f',
-    'query': dc_city
-    }
-
-    api_result = requests.get('http://api.weatherstack.com/current', params) """
-    
-    api_result = requests.get('http://localhost:8080/scenario1/' + str(nb))
-
-    api_response = api_result.json()
-    
-    return api_response[dc_city]
 
 
 def main():
     
-    cities_list = ['Rouen', 'Bordeaux', 'Nice']
+    cities_name = ['Rouen', 'Bordeaux', 'Nice']
 
     #Normandie 1
     #Normandie 2
     #Chartres
     
     # Création des DataCenters avec les paramètres:
-    # ensoleillement / rendement / temperature / kWc
-    Rouen = DataCenter(1000,1,25,3)
-    Bordeaux = DataCenter(1200,1,25,3)
-    Nice = DataCenter(1500,1,25,3)
+    # ensoleillement / rendement / temperature / kWc / humidity / uv / weather_code / cloud_cover
+    
+    Rouen = DataCenter(1000,1,25,3,20,3,113,10)
+    Bordeaux = DataCenter(1200,1,25,3,20,3,113,10)
+    Nice = DataCenter(1500,1,25,3,20,3,113,10)
+ 
+    cities_list = []
+
+    cities_list.append(Rouen)
+    cities_list.append(Bordeaux)
+    cities_list.append(Nice)
     
     energy_available = [500, 500, 500] 
 
-    while True: # 30 seconds loop
-        
-        temperature = []
-        meteo_code = []
-        uv_index = []       #API data
-        cloud_cover = []
-        humidity = []
+    compteur = 1
+
+    while compteur <= 48: # 2 seconds loop
 
         prod = []       #production/consommation/ratio
         conso = []
         ratio = []
 
-        #for i in range(len(cities_list)):
-                #appel API wiremock temperature
-                #appel API wiremock meteo code
-                #appel API wiremock uv index
-                #appel API wiremock cloud cover
-                #appel API wiremock humidity
-                
+        for i in range(3):
+            data = appel_api(cities_name[i],compteur)
 
-        prod.append(Rouen.calcul_production(3600))
-        prod.append(Bordeaux.calcul_production(3600))
-        prod.append(Nice.calcul_production(3600))
+            cities_list[i].maj_temperature(data['Temperature'])
+            cities_list[i].maj_uv(data['UV index'])
+            cities_list[i].maj_weather_code(data['Weather Code'])
+            cities_list[i].maj_cloud_cover(data['Cloud Cover'])
+            cities_list[i].maj_humidity(data['Humidity'])
 
-        conso.append(Rouen.calcul_consommation(3600,1))
-        conso.append(Bordeaux.calcul_consommation(3600,0.9))
-        conso.append(Nice.calcul_consommation(3600,0.8))
+            cities_list[i].calcul_redement()
+            
+            prod.append(cities_list[i].calcul_production(1800))
+        
+            conso.append(cities_list[i].calcul_consommation(1800,1))  #ajuster dans le code final
 
-        for i in range(len(cities_list)):
             energy_available[i] += prod[i]
             energy_available[i] -= conso[i]
+
             if energy_available[i] < 0:
                 energy_available[i] = 0
 
 
-        #Rouen.maj_temperature(temperature[0])
-        #Bordeaux.maj_temperature(temperature[1])
-        #Nice.maj_temperature(temperature[2])
-        
+        """ for i in range(len(cities_list)):
+            energy_available[i] += prod[i]
+            energy_available[i] -= conso[i]
+            if energy_available[i] < 0:
+                energy_available[i] = 0 """
+
+
         somme = sum(energy_available)
         for i in range(3):
-            if (energy_available[i]/somme <0):
+            if somme == 0:
+                ratio.append(0.33)
+            elif (energy_available[i]/somme <0):
                 ratio.append(0)
             else:
-                ratio.append(round(energy_available[i]/somme,2))
+                ratio.append(round(energy_available[i]/somme,1))
 
         print("Production = ", prod)
         print("Consommation = ",conso)
         print("Energy = ", energy_available)
         print("Ratio = ",ratio)
 
-        time.sleep(30.0 - ((time.time() - starttime) % 30.0))
+        compteur += 1
+
+        time.sleep(0.1 - ((time.time() - starttime) % 0.1))
 
 main()
