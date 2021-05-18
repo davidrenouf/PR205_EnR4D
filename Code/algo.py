@@ -4,6 +4,7 @@ import time
 import os 
 from operator import itemgetter
 import yaml
+import math 
 
 DURATION = 24
 
@@ -14,7 +15,7 @@ starttime = time.time()
 # TEST
 def compute_nb_pods(nb_pods,ratio):
     nb = nb_pods*ratio
-    return nb
+    return math.floor(nb)
 
 def get_file_name(node_nb,pod_nb):
     if(node_nb == 1):
@@ -32,10 +33,7 @@ def create_pod(origin_file,pod_nb,node_nb):
     os.system("cp "+origin_file+" "+file_name)
     with open(file_name, "r") as yamlfile:
         data = yaml.load(yamlfile, Loader=yaml.FullLoader)
-        #print(data)
-        #print(data['metadata']['name'])
         data['metadata']['name'] = name
-        #print("The node has been changed for "+name)
         yamlfile.close()
 
     with open(file_name, 'w') as yamlfile:
@@ -56,29 +54,27 @@ def get_node_name_by_nb(node_nb):
 def edit_node(node_nb,wi_pods_nb,wj_pods_nb,wi_pods_names,wj_pods_names):
     
     node_name = get_node_name_by_nb(node_nb)
-    new_file_name = get_file_name(node_nb,wi_pods_nb[0])
+    nb = wi_pods_nb[0]
+    file_name = wi_pods_names[0]
+    new_file_name = get_file_name(node_nb,nb)
 
-    wj_pods_names.append(wi_pods_names[0])
-    wj_pods_nb.append(wi_pods_nb[0])
+    wj_pods_names.append(new_file_name)
+    wj_pods_nb.append(nb)
     wi_pods_names.pop(0)
     wi_pods_nb.pop(0)
 
-    #print(wi_pods_names)
-    file_name = wi_pods_names[0]
+    
     os.system("cp "+file_name+" "+new_file_name)
     os.system("rm "+file_name)
 
     with open(new_file_name, "r") as yamlfile:
         data = yaml.load(yamlfile, Loader=yaml.FullLoader)
         data['spec']['nodeName'] = node_name
-        #print("The node has been changed for "+str(node_name))
         yamlfile.close()
 
     with open(new_file_name, 'w') as yamlfile:
         data1 = yaml.dump(data, yamlfile)
         yamlfile.close()
-    nb = wi_pods_nb[0]
-    print(nb)
     os.system("sudo kubectl delete pods pod"+str(nb))
     os.system("sudo kubectl apply -f "+new_file_name)
 
@@ -142,11 +138,10 @@ def move_pod(mv1,wi_pods_nb,wj_pods_nb,wi_pods_names,wj_pods_names,nb_node):
             edit_node(nb_node,wi_pods_nb,wj_pods_nb,wi_pods_names,wj_pods_names)
 
 
-
 # MAIN 
 
 nb_pods = 10
-L_ratio = [0.2,0.5,0.3, 0.3,0.6,0.1, 0.3,0.5,0.2]
+L_ratio = [0.3,0.4,0.3, 0.4,0.3,0.3, 0.4,0.1,0.5]
 w1_pods_nb = []
 w1_pods_names = []
 w2_pods_nb = []
