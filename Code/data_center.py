@@ -3,6 +3,8 @@ import requests
 import time
 import os 
 
+nb_hour = 24
+
 starttime = time.time()
 
 def appel_api(dc_city,nb):
@@ -12,7 +14,7 @@ def appel_api(dc_city,nb):
 
     api_response = api_result.json()
     
-    return api_response[dc_city][0]
+    return api_response[dc_city]
 
 class DataCenter :
     "Definition d'un data center"
@@ -28,27 +30,41 @@ class DataCenter :
         self.weather_code = weather_code
         self.cloud_cover = cloud_cover
 
-    def calcul_redement(self):
+    def calcul_redement(self,hour):
         rendement = 1
 
+        tab_rendement = [0.2, 0.2, 0.2, 0, 0, 0, 0.2, 0.2, 0.2, 0.6, 0.6, 0.6, 0.8, 0.8, 0.8, 1, 1, 1, 0.6, 0.6, 0.6, 0.4, 0.4, 0.4]
+
         #Weather code 113 = sunny 
+        #Weather code 119 = cloudy
+        #Weather code 302 = rainy
 
-        if (self.weather_code != 113):
+        if (self.weather_code == 113):
+            
+            rendement *= (1-self.cloud_cover/100)
+            
+            if (self.uv >= 5):
+                rendement *= 1.2
+
+        if (self.weather_code == 119):
+
+            rendement *= (1-self.cloud_cover/100)
+
+            if (70 > self.humidity > 50):
+                rendement *= 0.9
+            elif (self.humidity >= 70):
+                rendement *= 0.8
+
+        if (self.weather_code == 302):
+
+            rendement *= (1-self.cloud_cover/100)
+            
             rendement *= 0.7
-
-        if (self.uv >= 3):
-            rendement *= 1.2
-
-        if (self.humidity >= 50):
-            rendement *= 0.9
-
-        if (self.cloud_cover >= 50):
-            rendement *= 0.5
         
         if (rendement > 1 ):
             rendement = 1
 
-        self.rendement = rendement
+        self.rendement = rendement*tab_rendement[hour-1]
 
     def calcul_production(self,t):
         "Production sur t secondes"
@@ -118,7 +134,7 @@ def main():
 
     compteur = 1
 
-    while compteur <= 48: # 2 seconds loop
+    while compteur <= nb_hour: # 2 seconds loop
 
         prod = []       #production/consommation/ratio
         conso = []
@@ -133,11 +149,11 @@ def main():
             cities_list[i].maj_cloud_cover(data['Cloud Cover'])
             cities_list[i].maj_humidity(data['Humidity'])
 
-            cities_list[i].calcul_redement()
+            cities_list[i].calcul_redement(compteur)
             
-            prod.append(cities_list[i].calcul_production(1800))
+            prod.append(cities_list[i].calcul_production(3600))
         
-            conso.append(cities_list[i].calcul_consommation(1800,1))  #ajuster dans le code final
+            conso.append(cities_list[i].calcul_consommation(3600,1))  #ajuster dans le code final
 
             energy_available[i] += prod[i]
             energy_available[i] -= conso[i]
@@ -162,10 +178,11 @@ def main():
             else:
                 ratio.append(round(energy_available[i]/somme,1))
 
-        print("Production = ", prod)
-        print("Consommation = ",conso)
+        #print("Production = ", prod)
+        #print("Consommation = ",conso)
         print("Energy = ", energy_available)
         print("Ratio = ",ratio)
+        print("\n")
 
         compteur += 1
 
