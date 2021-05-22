@@ -153,7 +153,7 @@ def appel_api(dc_city, nb):
 
     api_response = api_result.json()
 
-    return api_response[dc_city][0]
+    return api_response[dc_city]
 
 
 class DataCenter:
@@ -170,27 +170,41 @@ class DataCenter:
         self.weather_code = weather_code
         self.cloud_cover = cloud_cover
 
-    def calcul_redement(self):
+    def calcul_redement(self,hour):
         rendement = 1
 
-        # Weather code 113 = sunny
+        tab_rendement = [0.2, 0.2, 0.2, 0, 0, 0, 0.2, 0.2, 0.2, 0.6, 0.6, 0.6, 0.8, 0.8, 0.8, 1, 1, 1, 0.6, 0.6, 0.6, 0.4, 0.4, 0.4]
 
-        if (self.weather_code != 113):
+        #Weather code 113 = sunny 
+        #Weather code 119 = cloudy
+        #Weather code 302 = rainy
+
+        if (self.weather_code == 113):
+            
+            rendement *= (1-self.cloud_cover/100)
+            
+            if (self.uv >= 5):
+                rendement *= 1.2
+
+        if (self.weather_code == 119):
+
+            rendement *= (1-self.cloud_cover/100)
+
+            if (70 > self.humidity > 50):
+                rendement *= 0.9
+            elif (self.humidity >= 70):
+                rendement *= 0.8
+
+        if (self.weather_code == 302):
+
+            rendement *= (1-self.cloud_cover/100)
+            
             rendement *= 0.7
-
-        if (self.uv >= 3):
-            rendement *= 1.2
-
-        if (self.humidity >= 50):
-            rendement *= 0.9
-
-        if (self.cloud_cover >= 50):
-            rendement *= 0.5
-
-        if (rendement > 1):
+        
+        if (rendement > 1 ):
             rendement = 1
 
-        self.rendement = rendement
+        self.rendement = rendement*tab_rendement[hour-1]
 
     def calcul_production(self, t):
         "Production sur t secondes"
@@ -198,7 +212,7 @@ class DataCenter:
         productionf = production*(1 - abs(25-self.temperature)*0.004)
         productiont = (productionf * t) / 31536000
 
-        return round(productiont * 1000)  # 1000 nb de panneau
+        return round(productiont * 1000 * 6)  # 1000 nb de panneau
 
     def calcul_consommation(sel, t, nb_pod):
         "Consommation sur t secondes"
@@ -244,7 +258,7 @@ def get_ratio(energy_available):
 
 # MAIN
 # Init
-nb_pods = 10
+nb_pods = 20
 L_ratio = [0.2, 0.5, 0.3, 0.3, 0.6, 0.1, 0.3, 0.5, 0.2]
 w1_pods_nb = []
 w1_pods_names = []
@@ -252,29 +266,31 @@ w2_pods_nb = []
 w2_pods_names = []
 w3_pods_nb = []
 w3_pods_names = []
-H = 12  # Nombres d'heures
+H = 24  # Nombres d'heures
 init = 0
 count_w1 = 0
 count_w2 = 0
 count_w3 = 0
 
 # Datacenters
-cities_name = ['Rouen', 'Bordeaux', 'Nice']
+cities_name = ['Paris', 'Rouen', 'Nice']
 
-Rouen = DataCenter(1000, 1, 25, 3, 20, 3, 113, 10)
-Bordeaux = DataCenter(1200, 1, 25, 3, 20, 3, 113, 10)
+Paris = DataCenter(1000, 1, 25, 3, 20, 3, 113, 10)
+Rouen = DataCenter(1200, 1, 25, 3, 20, 3, 113, 10)
 Nice = DataCenter(1500, 1, 25, 3, 20, 3, 113, 10)
 
 cities_list = []
 
+cities_list.append(Paris)
 cities_list.append(Rouen)
-cities_list.append(Bordeaux)
 cities_list.append(Nice)
 
 # Metrics
 energy = np.zeros([H+1, 3])
 pod_number = np.zeros([H, 3])
-energy_available = [1550, 1200, 850]
+production = np.zeros([H+1, 3])
+consommation = np.zeros([H+1, 3])
+energy_available = [1000, 2500, 1500]
 
 for i in range(0, 3):
     energy[0][i] = energy_available[i]
@@ -285,24 +301,11 @@ for j in range(0, H):
     conso = []
     prod = []
     ratio = get_ratio(energy_available)
-    print('Ratio de David :',ratio)
-    
-    ## Get prod and conso
-    for i in range(3):
-        data = appel_api(cities_name[i], j+1)
 
-        cities_list[i].maj_temperature(data['Temperature'])
-        cities_list[i].maj_uv(data['UV index'])
-        cities_list[i].maj_weather_code(data['Weather Code'])
-        cities_list[i].maj_cloud_cover(data['Cloud Cover'])
-        cities_list[i].maj_humidity(data['Humidity'])
-
-        cities_list[i].calcul_redement()
-
-        prod.append(cities_list[i].calcul_production(1800))
-
-        conso.append(cities_list[i].calcul_consommation(
-            1800, 1))  # ajuster dans le code final
+    print()
+    print()
+    print('--------------------------------  ',j, 'h' + '  --------------------------------')
+    print('Liste des ratios : ',ratio)
 
     ## Pod distribution according to ratio
     w1_nb = compute_nb_pods(nb_pods, ratio[0])
@@ -334,16 +337,45 @@ for j in range(0, H):
         curr_w2 = count_w2
         curr_w3 = count_w3
 
+        curr_nb_pods = [curr_w1, curr_w2, curr_w3]
+
+        ## Get prod and conso
+        for i in range(3):
+            data = appel_api(cities_name[i], j+1)
+
+            cities_list[i].maj_temperature(data['Temperature'])
+            cities_list[i].maj_uv(data['UV index'])
+            cities_list[i].maj_weather_code(data['Weather Code'])
+            cities_list[i].maj_cloud_cover(data['Cloud Cover'])
+            cities_list[i].maj_humidity(data['Humidity'])
+
+            cities_list[i].calcul_redement(j)
+
+            prod.append(cities_list[i].calcul_production(3600))
+
+            conso.append(cities_list[i].calcul_consommation(
+                3600, curr_nb_pods[i]))  # ajuster dans le code final
+
+
         ## Get green energy available
         #conso = predict_conso(curr_w1, curr_w2, curr_w3)
 
         for i in range(0, 3):
             energy_available[i] = energy_available[i] + prod[i] - conso[i]
-            energy[j+1][i] = energy_available[i]
 
-        print('Consommation : ', conso)
-        print('Production : ', prod)
-        print('Energie disponible : ', energy_available)
+            if energy_available[i] < 0:
+                energy_available[i] = 0
+
+            energy[j+1][i] = energy_available[i]
+            consommation[j+1][i] = conso[i]
+            production[j+1][i] = prod[i]
+
+
+
+
+        print('Liste des consommations : ', conso)
+        print('Liste des productions : ', prod)
+        print('Liste des energies disponible : ', energy_available)
 
         pod_number[j][0] = curr_w1
         pod_number[j][1] = curr_w2
@@ -363,27 +395,157 @@ for j in range(0, H):
         curr_w2 = len(w2_pods_nb)
         curr_w3 = len(w3_pods_nb)
 
+        curr_nb_pods = [curr_w1, curr_w2, curr_w3]
+
+            ## Get prod and conso
+        for i in range(3):
+            data = appel_api(cities_name[i], j+1)
+
+            cities_list[i].maj_temperature(data['Temperature'])
+            cities_list[i].maj_uv(data['UV index'])
+            cities_list[i].maj_weather_code(data['Weather Code'])
+            cities_list[i].maj_cloud_cover(data['Cloud Cover'])
+            cities_list[i].maj_humidity(data['Humidity'])
+
+            cities_list[i].calcul_redement(j)
+
+            prod.append(cities_list[i].calcul_production(3600))
+
+            conso.append(cities_list[i].calcul_consommation(
+                3600, curr_nb_pods[i]))  # ajuster dans le code final
+
         # Update energy metrics
 
         for i in range(0, 3):
             energy_available[i] = energy_available[i] + prod[i] - conso[i]
-            energy[j+1][i] = energy_available[i]
 
-        print('Consommation : ', conso)
-        print('Production : ', prod)
-        print('Energie disponible : ', energy_available)
+            if energy_available[i] < 0:
+                energy_available[i] = 0
+
+            energy[j+1][i] = energy_available[i]
+            consommation[j+1][i] = conso[i]
+            production[j+1][i] = prod[i]
+
+        print('Liste des consommations : ', conso)
+        print('Liste des productions : ', prod)
+        print('Liste des energies disponible : ', energy_available)
 
 
         pod_number[j][0] = curr_w1
         pod_number[j][1] = curr_w2
         pod_number[j][2] = curr_w3
 
-    print("Il y'a "+str(curr_w1)+" pods dans le worker 1")
-    print("Il y'a "+str(curr_w2)+" pods dans le worker 2")
-    print("Il y'a "+str(curr_w3)+" pods dans le worker 3")
+    print("Nombre de workload sur le Datacenter Paris : "+str(curr_w1))
+    print("Nombre de workload sur le Datacenter Rouen : "+str(curr_w2))
+    print("Nombre de workload sur le Datacenter Nice : "+str(curr_w3))
 
 print('Energie disponible : ', energy)
 print('Nombre de pods : ', pod_number)
+print('Production : ', production)
+print('Consommation : ', consommation)
+
 
 # time.sleep(5)
+# %%
+import matplotlib.pyplot as plt
+
+
+
+## Display the green energy evolution
+
+plt.figure(1)
+plt.figure(figsize=(14, 10))    
+
+ax = plt.subplot(111)    
+ax.spines["top"].set_visible(False)    
+ax.spines["bottom"].set_visible(False)    
+ax.spines["right"].set_visible(False)    
+ax.spines["left"].set_visible(False)       
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left() 
+ax.set_axisbelow(True)
+plt.grid(True, color="#93a1a1", alpha=0.3)
+plt.plot(energy, ":o")
+plt.title('Green energy evolution by time')
+plt.xlabel('Time [h]')
+plt.ylabel('Green energy available [kWh]')
+
+
+plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+plt.show()
+plt.savefig("green_energy.png")
+
+## Display the evolution of pod numbers on each node
+
+plt.figure(2)
+plt.figure(figsize=(10, 10))    
+
+ax = plt.subplot(111)    
+ax.spines["top"].set_visible(False)    
+ax.spines["bottom"].set_visible(False)    
+ax.spines["right"].set_visible(False)    
+ax.spines["left"].set_visible(False)       
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left() 
+ax.set_axisbelow(True)
+plt.grid(True, color="#93a1a1", alpha=0.3)
+plt.plot(pod_number, ":o", label={'DC Nice', 'DC Rouen', 'DC Paris'})
+#plt.hist(pod_number[:,0], bins=24, alpha=0.5)
+#plt.hist(pod_number[:,1], bins=24, alpha=0.5)
+#plt.hist(pod_number[:,2], bins=24, alpha=0.5)
+plt.title('Workload number evolution by time')
+plt.xlabel('Time [h]')
+plt.ylabel('Workload number')
+
+plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+plt.show()
+plt.savefig("pod_number.png")
+
+## Display the evolution of node production
+
+plt.figure(3)
+plt.figure(figsize=(14, 10))    
+
+ax = plt.subplot(111)    
+ax.spines["top"].set_visible(False)    
+ax.spines["bottom"].set_visible(False)    
+ax.spines["right"].set_visible(False)    
+ax.spines["left"].set_visible(False)       
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left() 
+ax.set_axisbelow(True)
+plt.grid(True, color="#93a1a1", alpha=0.3)
+plt.plot(production, ":o", label={'DC Paris', 'DC Rouen', 'DC Nice'})
+plt.title('Datacenter production evolution by time')
+plt.xlabel('Time [h]')
+plt.ylabel('Production [kWh]')
+
+plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+plt.show()
+plt.savefig("production.png")
+
+## Display the evolution of node production
+
+plt.figure(4)
+plt.figure(figsize=(10, 10))    
+
+ax = plt.subplot(111)    
+ax.spines["top"].set_visible(False)    
+ax.spines["bottom"].set_visible(False)    
+ax.spines["right"].set_visible(False)    
+ax.spines["left"].set_visible(False)       
+ax.get_xaxis().tick_bottom()    
+ax.get_yaxis().tick_left() 
+ax.set_axisbelow(True)
+plt.grid(True, color="#93a1a1", alpha=0.3)
+plt.plot(consommation, ":o", label={'DC Nice', 'DC Rouen', 'DC Paris'})
+plt.title('Node consumption evolution by time')
+plt.xlabel('Time [h]')
+plt.ylabel('Consumption [kWh]')
+
+plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+plt.show()
+plt.savefig("consumption.png")
+
+
 # %%
