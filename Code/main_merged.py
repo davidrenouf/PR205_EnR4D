@@ -8,12 +8,12 @@ import numpy as np
 import requests
 import math
 
-
+# Give the pod number depending on the ratio
 def compute_nb_pods(nb_pods, ratio):
     nb = nb_pods*ratio
     return math.floor(nb)
 
-
+# Create the new file name, depending on the pod number
 def get_file_name(node_nb, pod_nb):
     if(node_nb == 1):
         new_file_name = "worker1_"+str(pod_nb)+".yaml"
@@ -23,22 +23,27 @@ def get_file_name(node_nb, pod_nb):
         new_file_name = "worker3_"+str(pod_nb)+".yaml"
     return new_file_name
 
-
+# Initialisation and creation of a pod 
 def create_pod(origin_file, pod_nb, node_nb):
+    # Get the file name and pod name
     file_name = get_file_name(node_nb, pod_nb)
     name = "pod"+str(pod_nb)
+
+    # Create the new file
     os.system("cp "+origin_file+" "+file_name)
+
+    # Modify the pod name in the yaml file
     with open(file_name, "r") as yamlfile:
         data = yaml.load(yamlfile, Loader=yaml.FullLoader)
         data['metadata']['name'] = name
         yamlfile.close()
-
     with open(file_name, 'w') as yamlfile:
         data1 = yaml.dump(data, yamlfile)
         yamlfile.close()
+    
+    # Apply the yaml file
     os.system("kubectl apply -f "+file_name)
     return file_name
-
 
 def get_node_name_by_nb(node_nb):
     if (node_nb == 1):
@@ -48,22 +53,25 @@ def get_node_name_by_nb(node_nb):
     elif (node_nb == 3):
         return "kind-worker3"
 
-
+# Edit the yaml file of a pod, for a reschudling
 def edit_node(node_nb, wi_pods_nb, wj_pods_nb, wi_pods_names, wj_pods_names):
-
+    # Get node name, pod number, file name and new file name
     node_name = get_node_name_by_nb(node_nb)
     nb = wi_pods_nb[0]
     file_name = wi_pods_names[0]
     new_file_name = get_file_name(node_nb, nb)
 
+    # Modify list of pods names and list of pods number to be up to date
     wj_pods_names.append(new_file_name)
     wj_pods_nb.append(nb)
     wi_pods_names.pop(0)
     wi_pods_nb.pop(0)
 
+    # Modify the yaml name
     os.system("cp "+file_name+" "+new_file_name)
     os.system("rm "+file_name)
 
+    # Modify the node selected
     with open(new_file_name, "r") as yamlfile:
         data = yaml.load(yamlfile, Loader=yaml.FullLoader)
         data['spec']['nodeName'] = node_name
@@ -72,15 +80,19 @@ def edit_node(node_nb, wi_pods_nb, wj_pods_nb, wi_pods_names, wj_pods_names):
     with open(new_file_name, 'w') as yamlfile:
         data1 = yaml.dump(data, yamlfile)
         yamlfile.close()
+
+    # Delete the pod and apply the new yaml file
     os.system("kubectl delete pod pod"+str(nb))
     os.system("kubectl apply -f "+new_file_name)
 
-
+# Function wich computes the pods movement
 def compute_movement(old1, old2, old3, cur1, cur2, cur3):
+    # Number of pods wich will be added or removed on each pods 
     diff1 = int(old1 - cur1)
     diff2 = int(old2 - cur2)
     diff3 = int(old3 - cur3)
-    # Calcul des déplacements de pods entres le node 1 et 2/3
+
+    # Pods movement from node 1 to 2 or/and 3 
     if ((diff1 == 0) or (diff1 < 0)):
         w1_w2 = 0
         w1_w3 = 0
@@ -96,7 +108,7 @@ def compute_movement(old1, old2, old3, cur1, cur2, cur3):
             w1_w2 = 0
             w1_w3 = int(abs(diff1))
 
-    # Calcul des déplacements de pods entres le node 2 et 3/1
+    # Pods movement from node 2 to 3 or/and 1
     if ((diff2 == 0) or (diff2 < 0)):
         w2_w3 = 0
         w2_w1 = 0
@@ -112,7 +124,7 @@ def compute_movement(old1, old2, old3, cur1, cur2, cur3):
             w2_w3 = 0
             w2_w1 = int(abs(diff2))
 
-    # Calcul des déplacements de pods entres le node 3 et 1/2
+    # Pods movement from node 3 to 1 or/and 2
     if ((diff3 == 0) or (diff3 < 0)):
         w3_w1 = 0
         w3_w2 = 0
@@ -127,17 +139,20 @@ def compute_movement(old1, old2, old3, cur1, cur2, cur3):
         else:
             w3_w1 = 0
             w3_w2 = int(abs(diff3))
+    
+    # List of every pods movement
+    # wi_wj : pods movement from node i to node j
     D = [w1_w2, w1_w3, w2_w3, w2_w1, w3_w1, w3_w2]
     return D
 
-
+# Function wich moves pods
 def move_pod(mv1, wi_pods_nb, wj_pods_nb, wi_pods_names, wj_pods_names, nb_node):
-    if (mv1 != 0):
+    if (mv1 != 0): # test if there are pods to move
         for i in range(mv1):
             edit_node(nb_node, wi_pods_nb, wj_pods_nb,
                       wi_pods_names, wj_pods_names)
 
-
+# Prediction of the comsumption on each nodes
 def predict_conso(nb_pod1, nb_pod2, nb_pod3):
     return [nb_pod1*10, nb_pod2*10, nb_pod3*10]
 
@@ -145,7 +160,7 @@ def predict_conso(nb_pod1, nb_pod2, nb_pod3):
 def predict_prod():
     return [10, 20, 50]
 
-
+# Call to the Api
 def appel_api(dc_city, nb):
     # API call
 
@@ -157,7 +172,7 @@ def appel_api(dc_city, nb):
 
 
 class DataCenter:
-    "Definition d'un data center"
+    "Definition of data center"
 
     def __init__(self, ensoleillement, rendement, temperature, kWc, humidity, uv, weather_code, cloud_cover):
         "Initialisation"
@@ -258,15 +273,15 @@ def get_ratio(energy_available):
 
 # MAIN
 # Init
-nb_pods = 20
-L_ratio = [0.2, 0.5, 0.3, 0.3, 0.6, 0.1, 0.3, 0.5, 0.2]
+nb_pods = 20 # Number of pods, in range 1:110
+L_ratio = [0.2, 0.5, 0.3, 0.3, 0.6, 0.1, 0.3, 0.5, 0.2] # Initial ratio
 w1_pods_nb = []
 w1_pods_names = []
 w2_pods_nb = []
 w2_pods_names = []
 w3_pods_nb = []
 w3_pods_names = []
-H = 24  # Nombres d'heures
+H = 24  # Hours number
 init = 0
 count_w1 = 0
 count_w2 = 0
@@ -313,6 +328,7 @@ for j in range(0, H):
     w3_nb = compute_nb_pods(nb_pods, ratio[2])
 
     ##------------------------------ j = 0 ------------------------------##
+    # First pods creations
     if (init == 0):
         for a in range(1, int(w1_nb+1)):
             file = create_pod("worker1.yaml", a, 1)
@@ -447,105 +463,105 @@ print('Consommation : ', consommation)
 
 # time.sleep(5)
 # %%
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+
+## DISPLAY SECTION ##
+
+# ## Display the green energy evolution
+
+# plt.figure(1)
+# plt.figure(figsize=(14, 10))    
+
+# ax = plt.subplot(111)    
+# ax.spines["top"].set_visible(False)    
+# ax.spines["bottom"].set_visible(False)    
+# ax.spines["right"].set_visible(False)    
+# ax.spines["left"].set_visible(False)       
+# ax.get_xaxis().tick_bottom()    
+# ax.get_yaxis().tick_left() 
+# ax.set_axisbelow(True)
+# plt.grid(True, color="#93a1a1", alpha=0.3)
+# plt.plot(energy, ":o")
+# plt.title('Green energy evolution by time')
+# plt.xlabel('Time [h]')
+# plt.ylabel('Green energy available [kWh]')
 
 
+# plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+# plt.show()
+# plt.savefig("green_energy.png")
 
-## Display the green energy evolution
+# ## Display the evolution of pod numbers on each node
 
-plt.figure(1)
-plt.figure(figsize=(14, 10))    
+# plt.figure(2)
+# plt.figure(figsize=(10, 10))    
 
-ax = plt.subplot(111)    
-ax.spines["top"].set_visible(False)    
-ax.spines["bottom"].set_visible(False)    
-ax.spines["right"].set_visible(False)    
-ax.spines["left"].set_visible(False)       
-ax.get_xaxis().tick_bottom()    
-ax.get_yaxis().tick_left() 
-ax.set_axisbelow(True)
-plt.grid(True, color="#93a1a1", alpha=0.3)
-plt.plot(energy, ":o")
-plt.title('Green energy evolution by time')
-plt.xlabel('Time [h]')
-plt.ylabel('Green energy available [kWh]')
+# ax = plt.subplot(111)    
+# ax.spines["top"].set_visible(False)    
+# ax.spines["bottom"].set_visible(False)    
+# ax.spines["right"].set_visible(False)    
+# ax.spines["left"].set_visible(False)       
+# ax.get_xaxis().tick_bottom()    
+# ax.get_yaxis().tick_left() 
+# ax.set_axisbelow(True)
+# plt.grid(True, color="#93a1a1", alpha=0.3)
+# plt.plot(pod_number, ":o", label={'DC Nice', 'DC Rouen', 'DC Paris'})
+# #plt.hist(pod_number[:,0], bins=24, alpha=0.5)
+# #plt.hist(pod_number[:,1], bins=24, alpha=0.5)
+# #plt.hist(pod_number[:,2], bins=24, alpha=0.5)
+# plt.title('Workload number evolution by time')
+# plt.xlabel('Time [h]')
+# plt.ylabel('Workload number')
 
+# plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+# plt.show()
+# plt.savefig("pod_number.png")
 
-plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
-plt.show()
-plt.savefig("green_energy.png")
+# ## Display the evolution of node production
 
-## Display the evolution of pod numbers on each node
+# plt.figure(3)
+# plt.figure(figsize=(14, 10))    
 
-plt.figure(2)
-plt.figure(figsize=(10, 10))    
+# ax = plt.subplot(111)    
+# ax.spines["top"].set_visible(False)    
+# ax.spines["bottom"].set_visible(False)    
+# ax.spines["right"].set_visible(False)    
+# ax.spines["left"].set_visible(False)       
+# ax.get_xaxis().tick_bottom()    
+# ax.get_yaxis().tick_left() 
+# ax.set_axisbelow(True)
+# plt.grid(True, color="#93a1a1", alpha=0.3)
+# plt.plot(production, ":o", label={'DC Paris', 'DC Rouen', 'DC Nice'})
+# plt.title('Datacenter production evolution by time')
+# plt.xlabel('Time [h]')
+# plt.ylabel('Production [kWh]')
 
-ax = plt.subplot(111)    
-ax.spines["top"].set_visible(False)    
-ax.spines["bottom"].set_visible(False)    
-ax.spines["right"].set_visible(False)    
-ax.spines["left"].set_visible(False)       
-ax.get_xaxis().tick_bottom()    
-ax.get_yaxis().tick_left() 
-ax.set_axisbelow(True)
-plt.grid(True, color="#93a1a1", alpha=0.3)
-plt.plot(pod_number, ":o", label={'DC Nice', 'DC Rouen', 'DC Paris'})
-#plt.hist(pod_number[:,0], bins=24, alpha=0.5)
-#plt.hist(pod_number[:,1], bins=24, alpha=0.5)
-#plt.hist(pod_number[:,2], bins=24, alpha=0.5)
-plt.title('Workload number evolution by time')
-plt.xlabel('Time [h]')
-plt.ylabel('Workload number')
+# plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+# plt.show()
+# plt.savefig("production.png")
 
-plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
-plt.show()
-plt.savefig("pod_number.png")
+# ## Display the evolution of node production
 
-## Display the evolution of node production
+# plt.figure(4)
+# plt.figure(figsize=(10, 10))    
 
-plt.figure(3)
-plt.figure(figsize=(14, 10))    
+# ax = plt.subplot(111)    
+# ax.spines["top"].set_visible(False)    
+# ax.spines["bottom"].set_visible(False)    
+# ax.spines["right"].set_visible(False)    
+# ax.spines["left"].set_visible(False)       
+# ax.get_xaxis().tick_bottom()    
+# ax.get_yaxis().tick_left() 
+# ax.set_axisbelow(True)
+# plt.grid(True, color="#93a1a1", alpha=0.3)
+# plt.plot(consommation, ":o", label={'DC Nice', 'DC Rouen', 'DC Paris'})
+# plt.title('Node consumption evolution by time')
+# plt.xlabel('Time [h]')
+# plt.ylabel('Consumption [kWh]')
 
-ax = plt.subplot(111)    
-ax.spines["top"].set_visible(False)    
-ax.spines["bottom"].set_visible(False)    
-ax.spines["right"].set_visible(False)    
-ax.spines["left"].set_visible(False)       
-ax.get_xaxis().tick_bottom()    
-ax.get_yaxis().tick_left() 
-ax.set_axisbelow(True)
-plt.grid(True, color="#93a1a1", alpha=0.3)
-plt.plot(production, ":o", label={'DC Paris', 'DC Rouen', 'DC Nice'})
-plt.title('Datacenter production evolution by time')
-plt.xlabel('Time [h]')
-plt.ylabel('Production [kWh]')
-
-plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
-plt.show()
-plt.savefig("production.png")
-
-## Display the evolution of node production
-
-plt.figure(4)
-plt.figure(figsize=(10, 10))    
-
-ax = plt.subplot(111)    
-ax.spines["top"].set_visible(False)    
-ax.spines["bottom"].set_visible(False)    
-ax.spines["right"].set_visible(False)    
-ax.spines["left"].set_visible(False)       
-ax.get_xaxis().tick_bottom()    
-ax.get_yaxis().tick_left() 
-ax.set_axisbelow(True)
-plt.grid(True, color="#93a1a1", alpha=0.3)
-plt.plot(consommation, ":o", label={'DC Nice', 'DC Rouen', 'DC Paris'})
-plt.title('Node consumption evolution by time')
-plt.xlabel('Time [h]')
-plt.ylabel('Consumption [kWh]')
-
-plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
-plt.show()
-plt.savefig("consumption.png")
+# plt.legend(['Datacenter Paris', 'Datacenter Rouen', 'Datacenter Nice'])
+# plt.show()
+# plt.savefig("consumption.png")
 
 
 # %%
