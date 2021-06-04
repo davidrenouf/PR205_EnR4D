@@ -39,7 +39,13 @@ The algorithm uses wiremock which must be installed and three yaml configuration
 
 #### Wiremock
 Go to this page http://wiremock.org/docs/download-and-installation/ and download the link at the bottom of the page.
-Once wiremock is installed, you have to move it in the "simulate_meteo.jar" folder. To launch wiremock, just type the following command in a terminal:
+Then, download "file.zip" and extract it. 
+You have to move the wiremock .jar installed "wiremock-jre8-standalone-2.28.0.jar" in the "fichier.zip" folder. 
+Your "fichier" folder should look like :
+
+![PR205_EnR4D](Common/img/fichier.PNG)
+
+To launch wiremock, just type the following command in a terminal:
 ```shell
 java -jar  wiremock-jre8-standalone-2.28.0.jar
 ```
