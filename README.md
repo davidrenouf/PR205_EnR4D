@@ -40,9 +40,9 @@ The algorithm uses wiremock which must be installed and three yaml configuration
 #### Wiremock
 Go to this page http://wiremock.org/docs/download-and-installation/ and download the link at the bottom of the page.
 Once wiremock is installed, you have to move it in the "simulate_meteo.jar" folder. To launch wiremock, just type the following command in a terminal:
-``
+```shell
 java -jar  wiremock-jre8-standalone-2.28.0.jar
-``
+```
 
 #### Yaml configuration files
 At each run, the algorithm creates a specified number of workloads. 
@@ -51,21 +51,21 @@ It is necessary to place in the same folder these three configuration files and 
 
 ## Run the algorithm
 First you have to launch wiremock with the command : 
-``
+```shell
 java -jar  wiremock-jre8-standalone-2.28.0.jar
-``
+```
 Then, you just have to type the following command :
-``
+```shell
 python3 main_merged.py
-``
+```
 
 To restart the algorithm, you will have to delete the pods and files that were created during the execution of the algorithm.
 Use the following commands:
 
-``
+```shell
 rm worker*_*
-``
-``
+```
+```shell
  kubectl delete pod pod1 pod2 pod3 pod4 pod5 pod6 pod7 pod8 pod9 pod10
-``
+```
 The second command depends on the number of pods created, you will have to adjust according to what you choose.
